@@ -64,13 +64,13 @@ def train_pacific_lon(size: int = 10, nb_epochs: int = 10, batch_size: int = 16)
         history["train"].append(mean_loss/nb_iters)
         history["validation"].append(mean_loss_val/nb_iters_val)
 
-    torch.save(model.state_dict(), f"models/HurricaneRNN_2D_Atlantic_1LSTMS_256_{device}.h5")
+    torch.save(model.state_dict(), f"models/HurricaneRes_RNN_2D_Atlantic_1LSTMS_256_{device}.h5")
     return history
 
 
 def test_pacific_lon(size, batch_size=16):
     model = HurricaneRNN("Atlantic", size-1, 0.2)
-    model.load_state_dict(torch.load("models/HurricaneRNN_2D_Atlantic_1LSTMS_256_cpu.h5"))
+    model.load_state_dict(torch.load("models/HurricaneRes_RNN_2D_Atlantic_1LSTMS_256_cpu.h5"))
 
     dict_atlantique = coords_parser("Data/atlantic.csv")
     dict_atlantique = remove_small_samples(dict_atlantique, min_size=size)
@@ -100,7 +100,6 @@ def test_pacific_lon(size, batch_size=16):
     return result
 
 
-
 history = train_pacific_lon(size=10, nb_epochs=60, batch_size=16)
 
 points = test_pacific_lon(size=10, batch_size=16)
@@ -113,7 +112,7 @@ for batch in points:
     x, y, y_hat = batch
     for i in range(len(x)):
         for vec in x[i].detach().numpy():
-            plt.scatter(vec[1], vec[0], c="blue")
-        plt.scatter(y[i].detach().numpy()[0][1], y[i].detach().numpy()[0][0], c='red')
-        plt.scatter(y_hat[i][1], y_hat[i][0], c='pink')
+            plt.scatter(vec[1]*90, vec[0]*45, c="blue")
+        plt.scatter(y[i].detach().numpy()[0][1]*90, y[i].detach().numpy()[0][0]*45, c='red')
+        plt.scatter(y_hat[i][1]*90, y_hat[i][0]*45, c='pink')
     plt.show()
