@@ -38,8 +38,8 @@ def coords_parser(filename):
         reader = csv.DictReader(csvfile)
         for row in reader:
             _key = row['ID']
-            value_lon = (intify(row['Longitude'], filename)+65) /90
-            value_lat = (intify(row['Latitude'], filename)-27) /45
+            value_lon = (intify(row['Longitude'], filename)+65)/20
+            value_lat = (intify(row['Latitude'], filename)-27)/10
             try:
                 coords_dict[_key].append([value_lat, value_lon])
             except KeyError:

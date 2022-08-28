@@ -1,6 +1,7 @@
 import torch
 from matplotlib import pyplot as plt
 from torch.nn import MSELoss
+from torchmetrics import MeanAbsolutePercentageError, MeanAbsoluteError
 from tqdm import tqdm
 
 from utils.coords_parser import coords_parser
@@ -24,19 +25,27 @@ def test_pacific_lon(size, batch_size=16):
         raise ValueError(f" X and Y must be of same length. Found x : {nb_data_test} and y : {len(y_test)}")
 
     nb_iters_test = nb_data_test // batch_size
-    mean_loss = 0.0
+    mean_mse = 0.0
+    mean_mae= 0.0
     mse = MSELoss()
+    mae = MeanAbsoluteError()
 
     result = []
     for i in tqdm(range(nb_iters_test)):
         data = torch.stack(x_test[i * batch_size:(i + 1) * batch_size], dim=0).float()  # .to(device)
         gt = torch.stack(y_test[i * batch_size:(i + 1) * batch_size], dim=0).float()
         out = model(data)
-
-        loss = torch.sqrt(mse(torch.unsqueeze(out, dim=1), gt))
-        mean_loss += loss.detach()
-        result.append((x_test[i * batch_size:(i + 1) * batch_size], y_test[i * batch_size:(i + 1) * batch_size], out.detach().numpy()))
-    print(f"Test Loss {mean_loss / nb_iters_test}")
+        print(gt)
+        print(out)
+        out= torch.add(torch.multiply(out, torch.tensor([[10, 20]])), torch.tensor([[27,-65]]))
+        gt= torch.add(torch.multiply(gt, torch.tensor([[[10, 20]]])), torch.tensor([[[27,-65]]]))
+        mse_value = torch.sqrt(mse(torch.unsqueeze(out, dim=1), gt))
+        mae_value = mae(torch.unsqueeze(out, dim=1), gt)
+        mean_mse += mse_value.detach()
+        mean_mae += mae_value.detach()
+        result.append((x_test[i * batch_size:(i + 1) * batch_size], gt, out.detach().numpy()))
+    print(f"Test RMSE {mean_mse / nb_iters_test}")
+    print(f"Test MAE {mean_mae / nb_iters_test}")
     return result
 
 if __name__ == "__main__":
@@ -45,8 +54,9 @@ if __name__ == "__main__":
     for batch in points:
         x, y, y_hat = batch
         for i in range(len(x)):
+            x[i] = torch.add(torch.multiply(x[i], torch.tensor([[10, 20]])), torch.tensor([[27, -65]]))
             for vec in x[i].detach().numpy():
-                plt.scatter(vec[1] * 90, vec[0] * 45, c="blue")
-            plt.scatter(y[i].detach().numpy()[0][1] * 90, y[i].detach().numpy()[0][0] * 45, c='red')
-            plt.scatter(y_hat[i][1] * 90, y_hat[i][0] * 45, c='pink')
+                plt.scatter(vec[1] , vec[0] * 1, c="blue")
+            plt.scatter(y[i].detach().numpy()[0][1], y[i].detach().numpy()[0][0], c='red')
+            plt.scatter(y_hat[i][1], y_hat[i][0], c='pink')
         plt.show()

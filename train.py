@@ -13,7 +13,7 @@ def train_pacific_lon(size: int = 10, nb_epochs: int = 10, batch_size: int = 16)
     # device = "cuda" if torch.cuda.is_available() else "cpu"
     device = "cpu"
 
-    model = HurricaneRNN("Atlantic", size-1)
+    model = HurricaneRNN("Atlantic", size-1, dropout=0.2)
     mse = MSELoss()
     opt = Adam(params=model.parameters(), lr=1e-3)
     dict_atlantique = coords_parser("Data/atlantic.csv")
@@ -61,7 +61,7 @@ def train_pacific_lon(size: int = 10, nb_epochs: int = 10, batch_size: int = 16)
         history["train"].append(mean_loss/nb_iters)
         history["validation"].append(mean_loss_val/nb_iters_val)
 
-    torch.save(model.state_dict(), f"models/HurricaneRes_RNN_2D_Atlantic_1LSTMS_256_{device}.h5")
+    torch.save(model.state_dict(), f"models/HurricaneRes_RNN_2D_Atlantic_1LSTMS_256_cpu.h5")
     return history
 
 

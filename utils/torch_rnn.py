@@ -14,7 +14,8 @@ class HurricaneRNN(Module):
         self.lstm1 = LSTM(input_size=2, dropout=self.dropout, hidden_size=self.hidden_size)
         self.lstm2 = LSTM(input_size=self.hidden_size, dropout=self.dropout, hidden_size=self.hidden_size)
         self.lstm3 = LSTM(input_size=self.hidden_size, dropout=self.dropout, hidden_size=self.hidden_size)
-        self.dense = Linear(in_features=self.hidden_size*series_length+2*series_length, out_features=2)
+        self.dense = Linear(in_features=self.hidden_size*series_length+2*series_length, out_features=256)
+        self.out = Linear(in_features=256, out_features=2)
         self.resblock = Identity()
 
     def forward(self, x):
@@ -26,4 +27,5 @@ class HurricaneRNN(Module):
         #x=self.maxpool(x)
         x = torch.cat((x, x1), dim=2)
         x = self.dense(x.view(len(x), -1))
+        x = self.out(x)
         return x
