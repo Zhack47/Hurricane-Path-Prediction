@@ -1,5 +1,7 @@
+import numpy as np
 import torch
 from matplotlib import pyplot as plt
+from numpy.random import shuffle
 from torch.nn import MSELoss
 from torch.optim import Adam
 from tqdm import tqdm
@@ -13,19 +15,39 @@ def train_pacific_lon(size: int = 10, nb_epochs: int = 10, batch_size: int = 16)
     # device = "cuda" if torch.cuda.is_available() else "cpu"
     device = "cpu"
 
-    model = HurricaneRNN("Atlantic", size-1, dropout=0.2)
+    model = HurricaneRNN("Atlantic", size-1, dropout=0.35)
     mse = MSELoss()
-    opt = Adam(params=model.parameters(), lr=1e-3)
+    opt = Adam(params=model.parameters(), lr=1e-4, weight_decay=1e-4)
     dict_atlantique = coords_parser("Data/atlantic.csv")
     dict_atlantique = remove_small_samples(dict_atlantique, min_size=size)
     train_keys, val_keys, test_keys = train_val_test_split(list(dict_atlantique.keys()))
-    x_train = [dict_atlantique[key][:size-1] for key in train_keys]
-    y_train = [dict_atlantique[key][size-1:size] for key in train_keys]
-    x_val = [dict_atlantique[key][:size-1] for key in val_keys]
-    y_val = [dict_atlantique[key][size-1:size] for key in val_keys]
+    x_train = []
+    x_val = []
+    y_train = []
+    y_val = []
+    for key in train_keys:
+        for i in range(len(dict_atlantique[key])-size+1):
+            x_train.append(dict_atlantique[key][i:size-1+i])
+            y_train.append(dict_atlantique[key][size - 1 + i:size+i])
+    for key in val_keys:
+        for i in range(len(dict_atlantique[key])-size+1):
+            x_val.append(dict_atlantique[key][i:size-1+i])
+            y_val.append(dict_atlantique[key][size - 1 + i:size + i])
+    print(np.shape((x_train)))
 
     nb_data_train = len(x_train)
     nb_data_val = len(x_val)
+
+    permut = list(range(nb_data_train))
+    shuffle(permut)
+    x_train_, y_train_ = [x_train[i] for i in permut], [y_train[i] for i in permut]
+    x_train, y_train = x_train_, y_train_
+
+
+    permut = list(range(nb_data_val))
+    shuffle(permut)
+    x_val_, y_val_ = [x_val[i] for i in permut], [y_val[i] for i in permut]
+    x_val, y_val = x_val_, y_val_
 
     if not (nb_data_train == len(y_train)):
         raise ValueError(f" X and Y must be of same length. Found x : {nb_data_train} and y : {len(y_train)}")
@@ -67,8 +89,9 @@ def train_pacific_lon(size: int = 10, nb_epochs: int = 10, batch_size: int = 16)
 
 if __name__ == "__main__":
 
-    history = train_pacific_lon(size=10, nb_epochs=60, batch_size=16)
+    history = train_pacific_lon(size=10, nb_epochs=120, batch_size=16)
 
     plt.plot(history["train"])
     plt.plot(history["validation"])
+    plt.legend("")
     plt.show()

@@ -1,5 +1,7 @@
 import torch
 from matplotlib import pyplot as plt
+from numpy.ma import concatenate
+from numpy.random import shuffle
 from torch.nn import MSELoss
 from torchmetrics import MeanAbsolutePercentageError, MeanAbsoluteError
 from tqdm import tqdm
@@ -17,17 +19,24 @@ def test_pacific_lon(size, batch_size=16):
     dict_atlantique = remove_small_samples(dict_atlantique, min_size=size)
 
     train_keys, val_keys, test_keys = train_val_test_split(list(dict_atlantique.keys()))
-    x_test = [dict_atlantique[key][:size-1] for key in test_keys]
-    y_test = [dict_atlantique[key][size-1:size] for key in test_keys]
+    x_test = []
+    y_test = []
+    for key in test_keys:
+        for i in range(len(dict_atlantique[key])-size+1):
+            x_test.append(dict_atlantique[key][i:size-1+i])
+            y_test.append(dict_atlantique[key][size - 1 + i:size + i])
     nb_data_test = len(x_test)
-
+    permut = list(range(nb_data_test))
+    shuffle(permut)
+    x_test_, y_test_ = [x_test[i] for i in permut], [y_test[i] for i in permut]
+    x_test, y_test = x_test_, y_test_
     if not nb_data_test == len(y_test):
         raise ValueError(f" X and Y must be of same length. Found x : {nb_data_test} and y : {len(y_test)}")
 
     nb_iters_test = nb_data_test // batch_size
-    mean_mse = 0.0
+    mean_rmse = 0.0
     mean_mae= 0.0
-    mse = MSELoss()
+    rmse = MSELoss()
     mae = MeanAbsoluteError()
 
     result = []
@@ -35,16 +44,15 @@ def test_pacific_lon(size, batch_size=16):
         data = torch.stack(x_test[i * batch_size:(i + 1) * batch_size], dim=0).float()  # .to(device)
         gt = torch.stack(y_test[i * batch_size:(i + 1) * batch_size], dim=0).float()
         out = model(data)
-        print(gt)
-        print(out)
         out= torch.add(torch.multiply(out, torch.tensor([[10, 20]])), torch.tensor([[27,-65]]))
         gt= torch.add(torch.multiply(gt, torch.tensor([[[10, 20]]])), torch.tensor([[[27,-65]]]))
-        mse_value = torch.sqrt(mse(torch.unsqueeze(out, dim=1), gt))
+        rmse_value = torch.sqrt(rmse(torch.unsqueeze(out, dim=1), gt))
         mae_value = mae(torch.unsqueeze(out, dim=1), gt)
-        mean_mse += mse_value.detach()
+        mean_rmse += rmse_value.detach()
         mean_mae += mae_value.detach()
         result.append((x_test[i * batch_size:(i + 1) * batch_size], gt, out.detach().numpy()))
-    print(f"Test RMSE {mean_mse / nb_iters_test}")
+    print(f"Test RMSE {mean_rmse / nb_iters_test}")
+    print(f"Test MSE {(mean_rmse / nb_iters_test)**2}")
     print(f"Test MAE {mean_mae / nb_iters_test}")
     return result
 
