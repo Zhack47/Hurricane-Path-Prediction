@@ -40,4 +40,4 @@ It's a very shallow model, as I found out the resultss only worsened when I deep
 ```python3 train.py```
 
 ### Testing
-```python3 train.py```
+```python3 test.py```
