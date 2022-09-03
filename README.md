@@ -25,4 +25,19 @@ It's a very shallow model, as I found out the resultss only worsened when I deep
 - 1 Dense (Fuully Connected Layer)
 
 
+## QUICKSTART
 
+### Installation
+
+```git clone https://github.com/Zhack47/Hurricane-Path-Prediction.git```
+
+```cd Hurricane-Path-Prediction/```
+
+```pip3 install -r requirements.txt```
+
+### Training
+
+```python3 train.py```
+
+### Testing
+```python3 train.py```
