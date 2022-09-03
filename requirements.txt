@@ -1,0 +1,13 @@
+cycler==0.11.0
+fonttools==4.37.1
+kiwisolver==1.4.4
+matplotlib==3.5.1
+numpy==1.21.5
+Pillow==9.2.0
+pyparsing==3.0.9
+python-dateutil==2.8.2
+six==1.16.0
+torch==1.11.0
+torchmetrics==0.9.3
+tqdm==4.64.1
+typing_extensions==4.3.0
