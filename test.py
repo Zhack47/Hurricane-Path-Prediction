@@ -2,6 +2,7 @@ import torch
 from matplotlib import pyplot as plt
 from numpy.ma import concatenate
 from numpy.random import shuffle
+from paramiko.py3compat import long
 from torch.nn import MSELoss
 from torchmetrics import MeanAbsolutePercentageError, MeanAbsoluteError
 from tqdm import tqdm
@@ -36,6 +37,7 @@ def test_pacific_lon(size, batch_size=16):
     nb_iters_test = nb_data_test // batch_size
     mean_rmse = 0.0
     mean_mae= 0.0
+    mean_dist= 0.0
     rmse = MSELoss()
     mae = MeanAbsoluteError()
 
@@ -50,10 +52,14 @@ def test_pacific_lon(size, batch_size=16):
         mae_value = mae(torch.unsqueeze(out, dim=1), gt)
         mean_rmse += rmse_value.detach()
         mean_mae += mae_value.detach()
+        lat_dist = torch.mean(59.9 * (out[:,0] - gt[:,:,0]))
+        lon_dist = torch.mean(47.79 * (out[:,0] - gt[:,:,0]))
+        mean_dist+=(lon_dist**2+lat_dist**2)**1/2
         result.append((x_test[i * batch_size:(i + 1) * batch_size], gt, out.detach().numpy()))
     print(f"Test RMSE {mean_rmse / nb_iters_test}")
     print(f"Test MSE {(mean_rmse / nb_iters_test)**2}")
     print(f"Test MAE {mean_mae / nb_iters_test}")
+    print(f"Test Distance (approx.):  {mean_dist / nb_iters_test} n miles")
     return result
 
 if __name__ == "__main__":
