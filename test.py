@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from numpy.ma import concatenate
@@ -10,11 +11,13 @@ from tqdm import tqdm
 from utils.coords_parser import coords_parser
 from utils.preprocessing import train_val_test_split, remove_small_samples
 from utils.torch_rnn import HurricaneRNN
-
+import geopy.distance
 
 def test_pacific_lon(size, batch_size=16):
     model = HurricaneRNN("Atlantic", size-1, 0.2)
+
     model.load_state_dict(torch.load("models/HurricaneRes_RNN_2D_Atlantic_1LSTMS_256_cpu.h5"))
+    #model.load_state_dict(torch.load("models/HurricaneRes_RNN_2D_Atlantic_1LSTMS_256_cpu_short_term_5pts.h5"))
 
     dict_atlantique = coords_parser("Data/atlantic.csv")
     dict_atlantique = remove_small_samples(dict_atlantique, min_size=size)
@@ -54,12 +57,18 @@ def test_pacific_lon(size, batch_size=16):
         mean_mae += mae_value.detach()
         lat_dist = torch.mean(59.9 * (out[:,0] - gt[:,:,0]))
         lon_dist = torch.mean(47.79 * (out[:,0] - gt[:,:,0]))
-        mean_dist+=(lon_dist**2+lat_dist**2)**1/2
+        for i_ in range(batch_size):
+            lat1 = out[i_, 0].detach().numpy()
+            lon1 = out[i_, 1].detach().numpy()
+            lat2 = gt[i_, 0, 0].detach().numpy()
+            lon2 = gt[i_, 0, 1].detach().numpy()
+            mean_dist+= geopy.distance.geodesic((lat1, lon1), (lat2, lon2)).nautical
+            print(mean_dist)
         result.append((x_test[i * batch_size:(i + 1) * batch_size], gt, out.detach().numpy()))
     print(f"Test RMSE {mean_rmse / nb_iters_test}")
     print(f"Test MSE {(mean_rmse / nb_iters_test)**2}")
     print(f"Test MAE {mean_mae / nb_iters_test}")
-    print(f"Test Distance (approx.):  {mean_dist / nb_iters_test} n miles")
+    print(f"Test Distance (approx.):  {mean_dist / (nb_iters_test * batch_size)} n miles")
     return result
 
 if __name__ == "__main__":

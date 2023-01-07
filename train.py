@@ -11,7 +11,7 @@ from utils.preprocessing import remove_small_samples, train_val_test_split
 from utils.torch_rnn import HurricaneRNN
 
 
-def train_pacific_lon(size: int = 10, nb_epochs: int = 10, batch_size: int = 16):
+def train_pacific_lon(size: int = 10, nb_epochs: int = 10, batch_size: int = 16, model_h5_filename="models/HurricaneRes_RNN_2D_Atlantic_1LSTMS_256_cpu.h5"):
     # device = "cuda" if torch.cuda.is_available() else "cpu"
     device = "cpu"
 
@@ -83,13 +83,13 @@ def train_pacific_lon(size: int = 10, nb_epochs: int = 10, batch_size: int = 16)
         history["train"].append(mean_loss/nb_iters)
         history["validation"].append(mean_loss_val/nb_iters_val)
 
-    torch.save(model.state_dict(), f"models/HurricaneRes_RNN_2D_Atlantic_1LSTMS_256_cpu.h5")
+    torch.save(model.state_dict(), model_h5_filename)
     return history
 
 
 if __name__ == "__main__":
-
-    history = train_pacific_lon(size=10, nb_epochs=120, batch_size=16)
+    previous_data_points = 10
+    history = train_pacific_lon(size=5, nb_epochs=120, batch_size=16, model_h5_filename="models/HurricaneRes_RNN_2D_Atlantic_1LSTMS_256_cpu_short_term_5pts.h5")
 
     plt.plot(history["train"])
     plt.plot(history["validation"])
